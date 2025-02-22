@@ -5,12 +5,14 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kyamisama/inventory-api/dto"
 	"github.com/kyamisama/inventory-api/service"
 )
 
 type IItemController interface {
 	FindAll(ctx *gin.Context)
 	FindById(ctx *gin.Context)
+	CreateItem(ctx *gin.Context)
 }
 
 type ItemController struct {
@@ -39,6 +41,20 @@ func (c *ItemController) FindById(ctx *gin.Context) {
 	item, err := c.services.FindById(uint(itemId))
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "Item not found"})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"data": item})
+}
+
+func (c *ItemController) CreateItem(ctx *gin.Context) {
+	var dto dto.CreateItemDto
+	if err := ctx.ShouldBindJSON(&dto); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
+		return
+	}
+	item, err := c.services.CreateItem(&dto)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"data": item})
