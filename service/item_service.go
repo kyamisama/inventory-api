@@ -9,6 +9,7 @@ import (
 
 type IItemService interface {
 	FindAll() (*[]models.Item, error)
+	FindById(itemId uint) (*models.Item, error)
 }
 
 type ItemMemoryService struct {
@@ -28,4 +29,12 @@ func (s *ItemMemoryService) FindAll() (*[]models.Item, error) {
 		return nil, fmt.Errorf("no items found")
 	}
 	return items, nil
+}
+
+func (s *ItemMemoryService) FindById(itemId uint) (*models.Item, error) {
+	item, err := s.repository.FindById(itemId)
+	if err != nil {
+		return nil, fmt.Errorf("could not find item with ID %d: %w", itemId, err)
+	}
+	return item, nil
 }
