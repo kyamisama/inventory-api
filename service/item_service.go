@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 
+	"github.com/kyamisama/inventory-api/dto"
 	"github.com/kyamisama/inventory-api/models"
 	"github.com/kyamisama/inventory-api/repository"
 )
@@ -10,17 +11,18 @@ import (
 type IItemService interface {
 	FindAll() (*[]models.Item, error)
 	FindById(itemId uint) (*models.Item, error)
+	CreateItem(dto *dto.CreateItemDto) (*models.Item, error)
 }
 
-type ItemMemoryService struct {
+type ItemService struct {
 	repository repository.IItemRepository
 }
 
 func NewItemService(repository repository.IItemRepository) IItemService {
-	return &ItemMemoryService{repository: repository}
+	return &ItemService{repository: repository}
 }
 
-func (s *ItemMemoryService) FindAll() (*[]models.Item, error) {
+func (s *ItemService) FindAll() (*[]models.Item, error) {
 	items, err := s.repository.FindAll()
 	if err != nil {
 		return nil, fmt.Errorf("could not find items: %w", err)
@@ -31,10 +33,18 @@ func (s *ItemMemoryService) FindAll() (*[]models.Item, error) {
 	return items, nil
 }
 
-func (s *ItemMemoryService) FindById(itemId uint) (*models.Item, error) {
+func (s *ItemService) FindById(itemId uint) (*models.Item, error) {
 	item, err := s.repository.FindById(itemId)
 	if err != nil {
 		return nil, fmt.Errorf("could not find item with ID %d: %w", itemId, err)
+	}
+	return item, nil
+}
+
+func (s *ItemService) CreateItem(dto *dto.CreateItemDto) (*models.Item, error) {
+	item, err := s.repository.CreateItem(dto)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create item with name %s: %w", dto.Name, err)
 	}
 	return item, nil
 }
