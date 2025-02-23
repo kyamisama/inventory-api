@@ -13,6 +13,7 @@ type IItemController interface {
 	FindAll(ctx *gin.Context)
 	FindById(ctx *gin.Context)
 	CreateItem(ctx *gin.Context)
+	DeleteItem(ctx *gin.Context)
 }
 
 type ItemController struct {
@@ -58,4 +59,17 @@ func (c *ItemController) CreateItem(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"data": item})
+}
+func (c *ItemController) DeleteItem(ctx *gin.Context) {
+	deleteItemId, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		return
+	}
+	item, err := c.services.DeleteItem(uint(deleteItemId))
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "Failed to delete item"})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"deleted_item": item})
 }
