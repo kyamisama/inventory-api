@@ -6,4 +6,5 @@ type Item struct {
 	Description string `json:"description"`
 	Quantity    uint   `json:"quantity"`
 	CreatedBy   string `json:"created_by"`
+	UpdatedBy   string `json:"updated_by"`
 }

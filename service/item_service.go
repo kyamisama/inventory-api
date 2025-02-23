@@ -12,6 +12,7 @@ type IItemService interface {
 	FindAll() (*[]models.Item, error)
 	FindById(itemId uint) (*models.Item, error)
 	CreateItem(dto *dto.CreateItemDto) (*models.Item, error)
+	DeleteItem(itemId uint) (*models.Item, error)
 }
 
 type ItemService struct {
@@ -47,4 +48,11 @@ func (s *ItemService) CreateItem(dto *dto.CreateItemDto) (*models.Item, error) {
 		return nil, fmt.Errorf("failed to create item with name %s: %w", dto.Name, err)
 	}
 	return item, nil
+}
+func (s *ItemService) DeleteItem(itemId uint) (*models.Item, error) {
+	deletedItem, err := s.repository.DeleteItem(itemId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to delete item with ID %d: %w", itemId, err)
+	}
+	return deletedItem, nil
 }
