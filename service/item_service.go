@@ -12,14 +12,15 @@ type IItemService interface {
 	FindAll() (*[]models.Item, error)
 	FindById(itemId uint) (*models.Item, error)
 	CreateItem(dto *dto.CreateItemDto) (*models.Item, error)
-	DeleteItem(itemId uint) (*models.Item, error)
+	UpdateItem(itemId uint, dto *dto.UpdateItemDto) (*models.Item, error)
+	DeleteItem(itemId uint) error
 }
 
 type ItemService struct {
 	repository repository.IItemRepository
 }
 
-func NewItemService(repository repository.IItemRepository) IItemService {
+func NewItemMemoryService(repository repository.IItemRepository) IItemService {
 	return &ItemService{repository: repository}
 }
 
@@ -43,16 +44,37 @@ func (s *ItemService) FindById(itemId uint) (*models.Item, error) {
 }
 
 func (s *ItemService) CreateItem(dto *dto.CreateItemDto) (*models.Item, error) {
-	item, err := s.repository.CreateItem(dto)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create item with name %s: %w", dto.Name, err)
+	item := models.Item{
+		Name:        dto.Name,
+		Description: dto.Description,
+		Quantity:    dto.Quantity,
+		CreatedBy:   dto.CreatedBy,
 	}
-	return item, nil
+	return s.repository.CreateItem(item)
 }
-func (s *ItemService) DeleteItem(itemId uint) (*models.Item, error) {
-	deletedItem, err := s.repository.DeleteItem(itemId)
+
+func (s *ItemService) UpdateItem(itemId uint, dto *dto.UpdateItemDto) (*models.Item, error) {
+	targetItem, err := s.repository.FindById(itemId)
 	if err != nil {
-		return nil, fmt.Errorf("failed to delete item with ID %d: %w", itemId, err)
+		return nil, err
 	}
-	return deletedItem, nil
+	// 異なるフィールドだけを更新
+	if targetItem.Name != dto.Name {
+		targetItem.Name = dto.Name
+	}
+	if targetItem.Description != dto.Description {
+		targetItem.Description = dto.Description
+	}
+	if targetItem.Quantity != dto.Quantity {
+		targetItem.Quantity = dto.Quantity
+	}
+	if targetItem.UpdatedBy != dto.UpdatedBy {
+		targetItem.UpdatedBy = dto.UpdatedBy
+	}
+
+	return s.repository.UpdateItem(targetItem)
+}
+
+func (s *ItemService) DeleteItem(itemId uint) error {
+	return s.repository.DeleteItem(itemId)
 }
