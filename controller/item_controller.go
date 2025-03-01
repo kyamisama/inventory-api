@@ -13,6 +13,7 @@ type IItemController interface {
 	FindAll(ctx *gin.Context)
 	FindById(ctx *gin.Context)
 	CreateItem(ctx *gin.Context)
+	UpdateItem(ctx *gin.Context)
 	DeleteItem(ctx *gin.Context)
 }
 
@@ -20,7 +21,7 @@ type ItemController struct {
 	services service.IItemService
 }
 
-func NewItemController(services service.IItemService) IItemController {
+func NewItemMemoryController(services service.IItemService) IItemController {
 	return &ItemController{services: services}
 }
 
@@ -60,16 +61,36 @@ func (c *ItemController) CreateItem(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, gin.H{"data": item})
 }
+
+func (c *ItemController) UpdateItem(ctx *gin.Context) {
+	itemId, err := strconv.ParseUint(ctx.Param("id"), 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid id"})
+		return
+	}
+	var input dto.UpdateItemDto
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	updateItem, err := c.services.UpdateItem(uint(itemId), &input)
+	if err != nil {
+		if err.Error() == "Item not found" {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Unexpected error"})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"data": updateItem})
+}
+
 func (c *ItemController) DeleteItem(ctx *gin.Context) {
 	deleteItemId, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
 		return
 	}
-	item, err := c.services.DeleteItem(uint(deleteItemId))
-	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "Failed to delete item"})
-		return
-	}
+	item := c.services.DeleteItem(uint(deleteItemId))
+
 	ctx.JSON(http.StatusOK, gin.H{"deleted_item": item})
 }
